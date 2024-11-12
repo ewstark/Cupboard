@@ -23,14 +23,18 @@ The primary limitation of the supported CPU is that it must have a static memory
 
 This project depends on an adapter board that electrically interfaces with the target CPU. Initially, the Adafruit "Metro M4 Grand Central" board is used. It can directly access over 40 gpio lines. This makes it capable of supporting a wide range of devices at a high rate of speed.
 
-___CAUTION:___  _The M4 Grand Central is limited to 3.3-volt logic on most pins. Porting this to boards that support a 5-volt interface should be trivial._
+___CAUTION:___  _The M4 Grand Central is limited to 3.3-volt logic on most pins. Porting this to a board that supports 5-volt gpio, such as the Arduino Mega2560, should be trivial. Alternatively, including level shifters should be simple._
 
 ___DISCLAIMER:___  _This design will be incrementally built in haphazard stages that won't make much sense upon retrospection. That's not my goal. This project is, in and of itself, and educational exercise for the author.  ;-)  I'll try to leave plenty of breadcrumbs in hopes that others are fed along the way. --EWS_
 
 ## Concept Stages
 
 Here's and overview of how work is expected to unfold.  I'll document each stage more fully below as I get to them.
-  1. Make It Work  __<-- We are here__
+  1. Make It Work
+     1. Alpha version to prove concept
+     1. Add initial basic features  __<-- We are here__
+        * Disassembler
+        * Auto-instruction increment
   1. Make It Better
      1. UI improvements
      1. Additional device support
