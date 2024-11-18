@@ -92,7 +92,7 @@ def write_eeprom_byte (address, data):
     set_eeprom_data_pins(data)
     pin_we.value = True
     reset_data_pin_dir()
-    # poll data until matches write or timeout (such as when SDP is enabled)
+    # poll data until matches write or timeout (e.g., when SDP is enabled)
     # experiments show ~6.4ms, datasheet claims under 10ms, timeout at 11ms
     matched = False
     start_ns = time.monotonic_ns()
@@ -306,25 +306,22 @@ def handle_command (cmdline):
         print("Unknown command '%s'" % cmd)
         show_help()
 
-    print("\nEEP: ", end='')
-    
-
 # -----------------------------------------------------------------------------------------------------------
 # MAIN
 # -----------------------------------------------------------------------------------------------------------
 def main ():
-    print("\n\nEEP: ", end='')
     reset_all_pins()
+    led.value = True
+    print("\n\nEEP: ", end='')
     while True:
-        led.value = True
         while supervisor.runtime.serial_bytes_available:
             cmdline = input().strip().upper()
             # ignore empty input
             if len(cmdline) > 0:
                 handle_command(cmdline)
+            print("\nEEP: ", end='')
         time.sleep(0.005)
-        led.value = False
-        time.sleep(0.01)
+        led.value = not led.value
 
 if __name__ == "__main__":
     main()
