@@ -186,17 +186,19 @@ def print_version ():
 
 def show_help ():
     print_version()
-    print("  D [addr]? [len]?      - Dump EEPROM contents, repeats last parameters if none given")
-    print("  DN                    - Dump Next contents, increments previous addr by previous count")
-    print("  F [addr] [len] [byte] - Fill EEPROM with a fixed byte")
-    print("  H ON|OFF              - Hex-only mode on or off, report state if no parameter")
-    print("  L I MEAN IT           - Lock EEPROM via SDP-enable, passphrase 'I MEAN IT' required")
-    print("  OW [count]            - Output Width, number of bytes per dumped line")
-    print("  U                     - Unlock EEPROM via SDP-disable")
-    print("  V                     - Version, report software version")
-    print("  W [addr] [data]+      - Write one or more bytes to EEPROM")
-    print("  WN [data]+            - Write one or more bytes to EEPROM at next address")
-    print("  PT [a] [d] [oe] [we]  - Pin Test (testing function, not normally used)")
+    print("  ?            - Help, show this information")
+    print("  .            - Echo request, expects '.' and return to 'EEP:' prompt")
+    print("  D addr? len? - Dump EEPROM contents, repeats last parameters if none given")
+    print("  DN           - Dump Next contents, increments previous addr by previous count")
+    print("  F addr len n - Fill EEPROM with a fixed byte")
+    print("  H ON|OFF     - Hex-only mode on or off, report state if no parameter")
+    print("  L I MEAN IT  - Lock EEPROM via SDP-enable, passphrase 'I MEAN IT' required")
+    print("  OW count     - Output Width, number of bytes per dumped line")
+    print("  U            - Unlock EEPROM via SDP-disable")
+    print("  V            - Version, report software version")
+    print("  W addr data+ - Write one+ bytes to EEPROM")
+    print("  WN data+     - Write one+ bytes to EEPROM at next address")
+    print("  PT a d oe we - Pin Test (testing function, not normally used)")
 
 def handle_command (cmdline):
     global dump_prev_addr, dump_prev_count, write_prev_address, output_width, pin_oe, force_hex
@@ -299,8 +301,11 @@ def handle_command (cmdline):
     elif cmd == 'V': # Version
         print_version()
 
-    elif cmd in ['?','H']: # Help
+    elif cmd == '?': # Help
         show_help()
+
+    elif cmd == '.': # Echo
+        print(".")
 
     else:
         print("Unknown command '%s'" % cmd)
@@ -312,14 +317,13 @@ def handle_command (cmdline):
 def main ():
     reset_all_pins()
     led.value = True
-    print("\n\nEEP: ", end='')
+    print("\n\nEEP:", end='')
     while True:
         while supervisor.runtime.serial_bytes_available:
             cmdline = input().strip().upper()
-            # ignore empty input
             if len(cmdline) > 0:
                 handle_command(cmdline)
-            print("\nEEP: ", end='')
+            print("\nEEP:", end='')
         time.sleep(0.005)
         led.value = not led.value
 
