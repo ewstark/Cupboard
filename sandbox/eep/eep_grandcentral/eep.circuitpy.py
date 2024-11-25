@@ -157,6 +157,11 @@ def dump_memory (start_address, num_bytes):
     if num_cols > 0:
         print()
 
+# fill a memory range with a fixed byte
+def fill_memory (start_address, num_bytes, data):
+    for a in range(start_address, start_address + num_bytes):
+        write_eeprom_byte(a, data)
+
 # interpret a number from the fields of user input
 def convert_user_number (field_text):
     global force_hex
@@ -200,21 +205,16 @@ def show_help ():
     print("  WN data+     - Write one+ bytes to EEPROM at next address")
     print("  PT a d oe we - Pin Test (testing function, not normally used)")
 
-def handle_command (cmdline):
+def handle_command (cmd, args):
     global dump_prev_addr, dump_prev_count, write_prev_address, output_width, pin_oe, force_hex
-    fields = cmdline.split(' ')
-    if len(fields) == 0:
-        return
-    cmd = fields[0]
-    fields = fields[1:]
-    num_fields = len(fields)
+    num_args = len(args)
 
     if cmd == 'D': # Dump memory [addr]? [count]?
-        if num_fields == 1:  # use new address and previous count
-            dump_prev_addr = convert_user_number(fields[0])
-        elif num_fields == 2:  # use new address and count
-            dump_prev_addr = convert_user_number(fields[0])
-            dump_prev_count = convert_user_number(fields[1])
+        if num_args == 1:  # use new address and previous count
+            dump_prev_addr = convert_user_number(args[0])
+        elif num_args == 2:  # use new address and count
+            dump_prev_addr = convert_user_number(args[0])
+            dump_prev_count = convert_user_number(args[1])
         dump_memory(dump_prev_addr, dump_prev_count)
 
     elif cmd == 'DN': # Dump Next memory block
@@ -222,22 +222,21 @@ def handle_command (cmdline):
         dump_memory(dump_prev_addr, dump_prev_count)
 
     elif cmd == 'F': # Fill [start] [count] [data]
-        if num_fields == 3:
-            print("Fill")
-            address = convert_user_number(fields[0])
-            count = convert_user_number(fields[1])
-            data = convert_user_number(fields[2])
+        if num_args == 3:
+            address = convert_user_number(args[0])
+            count = convert_user_number(args[1])
+            data = convert_user_number(args[2])
             fill_memory(address, count, data)
         else:
             print("Fill requires three arguments")
 
     elif cmd == 'H': # Hex-only mode on or off, report state if no parameter
-        if num_fields == 0:
+        if num_args == 0:
             print("Hex-only input:", "Enabled" if force_hex else "Disabled")
-        elif num_fields == 1:
-            if fields[0] == 'ON':
+        elif num_args == 1:
+            if args[0] == 'ON':
                 force_hex = True
-            elif fields[0] == 'OFF':
+            elif args[0] == 'OFF':
                 force_hex = False
             else:
                 print("Hex-only recognizes ON or OFF")
@@ -245,8 +244,8 @@ def handle_command (cmdline):
             print("Hex-only takes up to one field")
 
     elif cmd == 'L': # Lock EEPROM; send SDP-enable commands
-        if num_fields == 3:
-            if ["I","MEAN","IT"] == [fields[0], fields[1], fields[2]]:
+        if num_args == 3:
+            if ["I","MEAN","IT"] == [args[0], args[1], args[2]]:
                 print("Locking EEPROM via SDP-enable")
                 lock_eeprom()
             else:
@@ -255,46 +254,46 @@ def handle_command (cmdline):
             print("Lock requires passphrase")
 
     elif cmd == 'OW': # Output Width [count]
-        if num_fields == 1:
+        if num_args == 1:
             print("Output Width")
-            output_width = convert_user_number(fields[0])
+            output_width = convert_user_number(args[0])
         else:
-            print("Pin Test requires four arguments")
+            print("OW requires 1 argument")
 
     elif cmd == 'PR': # Pin Reset
         print("Pin Reset")
         reset_all_pins()
 
     elif cmd == 'PT': # Pin Test [addr] [data] [oe] [we]
-        if num_fields == 4:
+        if num_args == 4:
             print("Pin Test")
-            address = convert_user_number(fields[0])
-            data = convert_user_number(fields[1])
-            oe = convert_user_number(fields[2])
-            we = convert_user_number(fields[3])
+            address = convert_user_number(args[0])
+            data = convert_user_number(args[1])
+            oe = convert_user_number(args[2])
+            we = convert_user_number(args[3])
             set_all_pins(address, data, oe, we)
         else:
-            print("Pin Test requires four arguments")
+            print("PT requires four arguments")
 
     elif cmd == 'U': # Unlock
         print("Unlocking EEPROM via SDP-disable")
         unlock_eeprom()
 
     elif cmd == 'W': # Write memory [addr] [data]+
-        if num_fields < 2:
-            print("Write requires at least two arguments")
+        if num_args < 2:
+            print("W requires at least two arguments")
         else:
-            write_prev_address = convert_user_number(fields[0])
-            for v in fields[1:]:
+            write_prev_address = convert_user_number(args[0])
+            for v in args[1:]:
                 write_eeprom_byte(write_prev_address, convert_user_number(v))
                 write_prev_address += 1
             write_prev_address -= 1
 
     elif cmd == 'WN': # Write Next memory
-        if num_fields < 1:
-            print("Write Next requires one argument")
+        if num_args < 1:
+            print("WN requires one argument")
         else:
-            for v in fields:
+            for v in args:
                 write_prev_address += 1
                 write_eeprom_byte(write_prev_address, convert_user_number(v))
     
@@ -317,13 +316,18 @@ def handle_command (cmdline):
 def main ():
     reset_all_pins()
     led.value = True
-    print("\n\nEEP:", end='')
+    print("\nEEP:")
     while True:
         while supervisor.runtime.serial_bytes_available:
-            cmdline = input().strip().upper()
-            if len(cmdline) > 0:
-                handle_command(cmdline)
-            print("\nEEP:", end='')
+            input_fields = input().strip().upper().split(' ')
+            if len(input_fields) > 0:
+                cmd = input_fields[0]
+                args = []
+                for a in input_fields[1:]:
+                    if len(a) > 0:
+                        args.append(a)
+                handle_command(cmd, args)
+            print("EEP:")
         time.sleep(0.005)
         led.value = not led.value
 

@@ -11,11 +11,6 @@
 ; OutputTxtValuesInLine       Integer 8          The maximum number of displayed byte values in each line.	8
 
 ; .setting "<name>" = <value> (use quotes for strings)
-.setting "OutputTxtAddressFormatFirst" = "{0:x04}:\r\n "
-.setting "OutputTxtAddressFormatNext" = " "
-.setting "OutputTxtValueFormat" = "'{0:x02}'"
-.setting "OutputTxtValueSeparator" = ", "
-.setting "OutputTxtLineSeparator" = ",\r\n"
 .setting "OutputTxtValuesInLine" = 16
 
 .org $ff00
@@ -30,7 +25,7 @@ reset:
     ldx #0
 printloop:
     lda message,x
-    beq reset
+    beq resetc
     jsr print_char
     inx
     jmp printloop
